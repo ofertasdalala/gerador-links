@@ -1,0 +1,73 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate config.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          AMAZON_TAG: ${{ secrets.AMAZON_TAG }}
+          ML_TAG: ${{ secrets.ML_TAG }}
+          ML_VITRINE: ${{ secrets.ML_VITRINE }}
+          ML_WORD: ${{ secrets.ML_WORD }}
+          SHOPEE_SUB_ID: ${{ secrets.SHOPEE_SUB_ID }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          config = {
+              "SUPABASE_URL": os.environ.get("SUPABASE_URL", ""),
+              "AMAZON_TAG": os.environ.get("AMAZON_TAG", ""),
+              "ML_TAG": os.environ.get("ML_TAG", ""),
+              "ML_VITRINE": os.environ.get("ML_VITRINE", ""),
+              "ML_WORD": os.environ.get("ML_WORD", ""),
+              "SHOPEE_SUB_ID": os.environ.get("SHOPEE_SUB_ID", "site"),
+          }
+
+          with open("config.js", "w", encoding="utf-8") as file:
+              file.write("window.CONFIG = " + json.dumps(config, indent=2, ensure_ascii=False) + ";\n")
+          PY
+
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+          cp index.html config.js _site/
+          touch _site/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
