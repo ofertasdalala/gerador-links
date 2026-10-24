@@ -336,13 +336,15 @@
 
         .btn-share {
             flex: 1;
-            padding: 11px 10px;
+            padding: 11px 3px;
             border-radius: 10px;
             color: #ffffff;
-            font-size: 0.84rem;
+            font-size: clamp(0.52rem, 2.2vw, 0.68rem);
             font-weight: 800;
+            letter-spacing: -0.01em;
             text-align: center;
             text-decoration: none;
+            white-space: nowrap;
             transition: opacity 0.2s;
         }
 
@@ -395,6 +397,16 @@
             color: #69717f;
             font-size: 0.78rem;
             text-align: center;
+        }
+
+        .footer a {
+            color: #8f98a6;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .footer a:hover {
+            color: var(--text);
         }
 
         .toast {
@@ -469,8 +481,8 @@
                     <button class="btn-secondary btn-open" id="open" type="button">↗ Abrir</button>
                 </div>
                 <div class="share">
-                    <a class="btn-share btn-wa" id="share-wa" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-                    <a class="btn-share btn-tg" id="share-tg" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
+                    <a class="btn-share btn-wa" id="share-wa" href="#" target="_blank" rel="noopener noreferrer">Compartilhe no WhatsApp</a>
+                    <a class="btn-share btn-tg" id="share-tg" href="#" target="_blank" rel="noopener noreferrer">Compartilhe no Telegram</a>
                 </div>
             </div>
         </section>
@@ -480,7 +492,7 @@
             <a class="social-tg" href="https://t.me/promos_da_lala" target="_blank" rel="noopener noreferrer">🤖 Grupo no Telegram</a>
         </div>
 
-        <p class="footer">Ofertas da Lala · links de afiliado</p>
+        <p class="footer">Ofertas da Lala · <a href="https://linktr.ee/ofertaslala" target="_blank" rel="noopener noreferrer">Siga nas redes sociais</a></p>
     </main>
 
     <div class="toast" id="toast" role="status"></div>
@@ -527,7 +539,7 @@
                         icon: "📋",
                         button: "Gerar link de afiliado",
                         placeholder: "Cole o link do produto do Mercado Livre...",
-                        hint: "Precisa do código numérico matt_tool no secret ML_TAG.",
+                        hint: "",
                         kind: "affiliate"
                     },
                     {
@@ -647,6 +659,7 @@
             field.hidden = mode.needsInput === false;
             icon.textContent = mode.icon;
             hint.textContent = mode.hint || "";
+            hint.hidden = !mode.hint;
             submit.textContent = mode.button;
 
             hideError();
