@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gerador de links de afiliado e busca de ofertas na Shopee, Mercado Livre e Amazon.">
+    <meta name="theme-color" content="#0f1115">
+    <meta property="og:title" content="Ofertas da Lala">
+    <meta property="og:description" content="Gere links de afiliado e pesquise ofertas na Shopee, Mercado Livre e Amazon.">
+    <meta property="og:type" content="website">
+    <title>Ofertas da Lala | Gerador de Links</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>">
+    <script src="config.js"></script>
+    <style>
+        :root {
+            --bg: #0f1115;
+            --panel: #171a21;
+            --panel-2: #20242d;
+            --field: #11141a;
+            --line: #2b303b;
+            --text: #f5f6f8;
+            --muted: #9aa3b2;
+            --brand: #ee4d2d;
+            --brand-2: #ff7337;
+            --brand-contrast: #ffffff;
+            --ok: #25d366;
+            --error: #ff6b6b;
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 28px 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--brand) 20%, transparent), transparent 55%),
+                var(--bg);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            transition: background 0.3s ease;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: clamp(1.6rem, 5vw, 2.1rem);
+            letter-spacing: -0.03em;
+        }
+
+        .brand p {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 0.94rem;
+        }
+
+        .card {
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: var(--panel);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        .store-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 7px;
+            padding: 6px;
+            margin-bottom: 14px;
+            border-radius: 14px;
+            background: var(--panel-2);
+        }
+
+        .store-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            min-height: 46px;
+            padding: 10px 4px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1.15;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, transform 0.15s;
+        }
+
+        .store-tab:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .store-tab:active {
+            transform: translateY(1px);
+        }
+
+        .store-tab[aria-pressed="true"] {
+            background: var(--brand);
+            color: var(--brand-contrast);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .modes {
+            display: flex;
+            gap: 7px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .modes::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mode {
+            flex: 1;
+            min-width: max-content;
+            padding: 10px 12px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: var(--panel-2);
+            color: var(--muted);
+            font-family: inherit;
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s, background 0.2s;
+        }
+
+        .mode:hover {
+            color: var(--text);
+        }
+
+        .mode[aria-pressed="true"] {
+            background: var(--field);
+            border-color: var(--brand);
+            color: var(--text);
+        }
+
+        .field {
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .field .icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem;
+            opacity: 0.75;
+            pointer-events: none;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 16px 16px 16px 43px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            outline: none;
+            background: var(--field);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.96rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .field input::placeholder {
+            color: #6f7785;
+        }
+
+        .field input:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent);
+        }
+
+        .hint {
+            min-height: 1.2em;
+            margin: 0 2px 12px;
+            color: var(--muted);
+            font-size: 0.79rem;
+            line-height: 1.35;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px 16px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
+            color: var(--brand-contrast);
+            font-family: inherit;
+            font-size: 0.98rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.92;
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 107, 107, 0.35);
+            border-radius: 10px;
+            background: rgba(255, 107, 107, 0.1);
+            color: #ffb4b4;
+            font-size: 0.88rem;
+            line-height: 1.4;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .result {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--field);
+        }
+
+        .result.show {
+            display: block;
+            animation: reveal 0.2s ease;
+        }
+
+        @keyframes reveal {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-title {
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .result-link {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            outline: none;
+            background: #0b0d12;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.86rem;
+        }
+
+        .result-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-secondary {
+            padding: 11px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--panel-2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-secondary:hover {
+            opacity: 0.86;
+        }
+
+        .btn-open {
+            border-color: transparent;
+            background: var(--brand);
+            color: var(--brand-contrast);
+        }
+
+        .share {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .btn-share {
+            flex: 1;
+            padding: 11px 10px;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 0.84rem;
+            font-weight: 800;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-share:hover {
+            opacity: 0.88;
+        }
+
+        .btn-wa {
+            background: #25d366;
+            color: #06240f;
+        }
+
+        .btn-tg {
+            background: #0088cc;
+        }
+
+        .social {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .social a {
+            flex: 1;
+            padding: 13px 10px;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 0.84rem;
+            font-weight: 800;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .social a:hover {
+            opacity: 0.88;
+        }
+
+        .social-wa {
+            background: #25d366;
+            color: #06240f;
+        }
+
+        .social-tg {
+            background: #0088cc;
+        }
+
+        .footer {
+            margin: 18px 0 0;
+            color: #69717f;
+            font-size: 0.78rem;
+            text-align: center;
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            z-index: 50;
+            padding: 12px 18px;
+            border-radius: 999px;
+            background: var(--ok);
+            color: #06240f;
+            font-size: 0.9rem;
+            font-weight: 800;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 16px);
+            transition: opacity 0.22s, transform 0.22s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        @media (max-width: 420px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .store-tab {
+                font-size: 0.76rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="app">
+        <header class="brand">
+            <h1>Ofertas da Lala</h1>
+            <p>Links de afiliado e buscas em um só lugar</p>
+        </header>
+
+        <section class="card" aria-label="Gerador de links">
+            <div class="store-tabs" role="group" aria-label="Escolha a loja">
+                <button class="store-tab" type="button" data-store="shopee" aria-pressed="true">🛍️ Shopee</button>
+                <button class="store-tab" type="button" data-store="ml" aria-pressed="false">💛 Mercado Livre</button>
+                <button class="store-tab" type="button" data-store="amazon" aria-pressed="false">📦 Amazon</button>
+            </div>
+
+            <div class="modes" id="modes" role="group" aria-label="Modo de uso"></div>
+
+            <form id="form" novalidate>
+                <div class="field" id="field">
+                    <span class="icon" id="icon">📋</span>
+                    <input id="input" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Link ou termo de busca">
+                </div>
+                <p class="hint" id="hint"></p>
+                <button class="btn-primary" id="submit" type="submit">Gerar link</button>
+            </form>
+
+            <div class="error" id="error" role="alert"></div>
+
+            <div class="result" id="result" aria-live="polite">
+                <div class="result-title" id="result-title">Link gerado</div>
+                <input class="result-link" id="result-link" type="text" readonly aria-label="Link gerado">
+                <div class="result-actions">
+                    <button class="btn-secondary" id="copy" type="button">📋 Copiar</button>
+                    <button class="btn-secondary btn-open" id="open" type="button">↗ Abrir</button>
+                </div>
+                <div class="share">
+                    <a class="btn-share btn-wa" id="share-wa" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                    <a class="btn-share btn-tg" id="share-tg" href="#" target="_blank" rel="noopener noreferrer">Telegram</a>
+                </div>
+            </div>
+        </section>
+
+        <div class="social">
+            <a class="social-wa" href="https://chat.whatsapp.com/KtUorhgfb9J1EwtOnIA530" target="_blank" rel="noopener noreferrer">💬 Grupo no WhatsApp</a>
+            <a class="social-tg" href="https://t.me/promos_da_lala" target="_blank" rel="noopener noreferrer">🤖 Grupo no Telegram</a>
+        </div>
+
+        <p class="footer">Ofertas da Lala · links de afiliado</p>
+    </main>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+        const CONFIG = window.CONFIG || {};
+
+        const STORES = {
+            shopee: {
+                name: "Shopee",
+                brand: "#ee4d2d",
+                brand2: "#ff7337",
+                contrast: "#ffffff",
+                modes: [
+                    {
+                        id: "link",
+                        label: "🔗 Gerar link",
+                        icon: "📋",
+                        button: "Gerar link de afiliado",
+                        placeholder: "Cole o link do produto da Shopee...",
+                        hint: "Aceita links shopee.com.br, s.shopee.com.br e shope.ee.",
+                        kind: "affiliate"
+                    },
+                    {
+                        id: "search",
+                        label: "🔍 Pesquisar",
+                        icon: "🔍",
+                        button: "Buscar na Shopee",
+                        placeholder: "O que você procura na Shopee?",
+                        hint: "A busca abre no site da Shopee.",
+                        kind: "search"
+                    }
+                ]
+            },
+            ml: {
+                name: "Mercado Livre",
+                brand: "#ffe600",
+                brand2: "#ffd000",
+                contrast: "#2d3277",
+                modes: [
+                    {
+                        id: "link",
+                        label: "🔗 Gerar link",
+                        icon: "📋",
+                        button: "Gerar link de afiliado",
+                        placeholder: "Cole o link do produto do Mercado Livre...",
+                        hint: "Precisa do código numérico matt_tool no secret ML_TAG.",
+                        kind: "affiliate"
+                    },
+                    {
+                        id: "vitrine",
+                        label: "🛍️ Vitrine",
+                        icon: "🛍️",
+                        button: "Abrir vitrine",
+                        placeholder: "",
+                        hint: "Abre sua vitrine de afiliado.",
+                        kind: "vitrine",
+                        needsInput: false
+                    },
+                    {
+                        id: "search",
+                        label: "🔍 Pesquisar",
+                        icon: "🔍",
+                        button: "Buscar no Mercado Livre",
+                        placeholder: "O que você procura no Mercado Livre?",
+                        hint: "A busca abre no site do Mercado Livre.",
+                        kind: "search"
+                    }
+                ]
+            },
+            amazon: {
+                name: "Amazon",
+                brand: "#ff9900",
+                brand2: "#ffb84d",
+                contrast: "#131921",
+                modes: [
+                    {
+                        id: "link",
+                        label: "🔗 Gerar link",
+                        icon: "📋",
+                        button: "Gerar link de afiliado",
+                        placeholder: "Cole o link do produto da Amazon...",
+                        hint: "Use o link completo. Links amzn.to não aceitam tag.",
+                        kind: "affiliate"
+                    },
+                    {
+                        id: "search",
+                        label: "🔍 Pesquisar",
+                        icon: "🔍",
+                        button: "Buscar na Amazon",
+                        placeholder: "O que você procura na Amazon?",
+                        hint: "A busca abre no site da Amazon.",
+                        kind: "search"
+                    }
+                ]
+            }
+        };
+
+        const storeTabs = Array.from(document.querySelectorAll(".store-tab"));
+        const modesEl = document.getElementById("modes");
+        const form = document.getElementById("form");
+        const field = document.getElementById("field");
+        const input = document.getElementById("input");
+        const icon = document.getElementById("icon");
+        const hint = document.getElementById("hint");
+        const submit = document.getElementById("submit");
+        const errorEl = document.getElementById("error");
+        const resultEl = document.getElementById("result");
+        const resultTitle = document.getElementById("result-title");
+        const resultLink = document.getElementById("result-link");
+        const copyBtn = document.getElementById("copy");
+        const openBtn = document.getElementById("open");
+        const shareWa = document.getElementById("share-wa");
+        const shareTg = document.getElementById("share-tg");
+        const toastEl = document.getElementById("toast");
+
+        let currentStore = "shopee";
+        let currentMode = "link";
+
+        try {
+            const savedStore = localStorage.getItem("ofertas_store");
+            if (savedStore && STORES[savedStore]) currentStore = savedStore;
+        } catch {
+            currentStore = "shopee";
+        }
+
+        function getStore() {
+            return STORES[currentStore];
+        }
+
+        function getMode() {
+            return getStore().modes.find((mode) => mode.id === currentMode) || getStore().modes[0];
+        }
+
+        function renderModes() {
+            modesEl.innerHTML = "";
+
+            getStore().modes.forEach((mode) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "mode";
+                button.dataset.mode = mode.id;
+                button.textContent = mode.label;
+                button.setAttribute("aria-pressed", String(mode.id === currentMode));
+                button.addEventListener("click", () => selectMode(mode.id));
+                modesEl.appendChild(button);
+            });
+        }
+
+        function selectMode(modeId) {
+            if (!getStore().modes.some((mode) => mode.id === modeId)) return;
+
+            currentMode = modeId;
+            const mode = getMode();
+
+            modesEl.querySelectorAll(".mode").forEach((button) => {
+                button.setAttribute("aria-pressed", String(button.dataset.mode === modeId));
+            });
+
+            input.value = "";
+            input.placeholder = mode.placeholder || "";
+            input.inputMode = mode.kind === "search" ? "search" : "url";
+            input.required = mode.needsInput !== false;
+            field.hidden = mode.needsInput === false;
+            icon.textContent = mode.icon;
+            hint.textContent = mode.hint || "";
+            submit.textContent = mode.button;
+
+            hideError();
+            hideResult();
+
+            if (mode.needsInput !== false) input.focus();
+        }
+
+        function selectStore(storeId) {
+            if (!STORES[storeId]) return;
+
+            currentStore = storeId;
+            currentMode = "link";
+
+            try {
+                localStorage.setItem("ofertas_store", storeId);
+            } catch {
+                currentStore = storeId;
+            }
+
+            const store = getStore();
+            document.documentElement.style.setProperty("--brand", store.brand);
+            document.documentElement.style.setProperty("--brand-2", store.brand2);
+            document.documentElement.style.setProperty("--brand-contrast", store.contrast);
+
+            storeTabs.forEach((tab) => {
+                tab.setAttribute("aria-pressed", String(tab.dataset.store === storeId));
+            });
+
+            renderModes();
+            selectMode("link");
+        }
+
+        function normalizeUrl(value) {
+            const trimmed = value.trim();
+            if (!trimmed) throw new Error("Cole o link do produto.");
+            const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+            try {
+                return new URL(withProtocol);
+            } catch {
+                throw new Error("URL inválida. Cole o link completo do produto.");
+            }
+        }
+
+        function hostMatches(url, domains) {
+            const host = url.hostname.toLowerCase();
+            return domains.some((domain) => host === domain || host.endsWith(`.${domain}`));
+        }
+
+        async function buildShopee(url) {
+            const base = (CONFIG.SUPABASE_URL || "").replace(/\/+$/, "");
+            if (!base) throw new Error("SUPABASE_URL não configurada no config.js.");
+
+            let response;
+            try {
+                response = await fetch(`${base}/functions/v1/shopee-link`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        url: url.toString(),
+                        subIds: [CONFIG.SHOPEE_SUB_ID || "site"]
+                    })
+                });
+            } catch {
+                throw new Error("Falha de conexão com o Supabase. Verifique a URL e o CORS.");
+            }
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || typeof data.shortLink !== "string") {
+                throw new Error(data.error || "Não foi possível gerar o link da Shopee.");
+            }
+
+            return data.shortLink;
+        }
+
+        function buildAmazon(url) {
+            const tag = (CONFIG.AMAZON_TAG || "").trim();
+            if (!tag) throw new Error("AMAZON_TAG não configurada.");
+
+            if (url.hostname.toLowerCase() === "amzn.to") {
+                throw new Error("Links amzn.to não aceitam tag. Abra o link e copie a URL completa do produto.");
+            }
+
+            const clean = new URL(url.toString());
+            clean.hash = "";
+
+            const removePatterns = [
+                /^tag$/,
+                /^ascsubtag$/,
+                /^linkCode$/,
+                /^linkId$/,
+                /^ref_/,
+                /^pd_rd_/,
+                /^pf_rd_/
+            ];
+
+            for (const key of Array.from(clean.searchParams.keys())) {
+                if (removePatterns.some((pattern) => pattern.test(key))) {
+                    clean.searchParams.delete(key);
+                }
+            }
+
+            clean.searchParams.set("tag", tag);
+            return clean.toString();
+        }
+
+        function mlToolCode() {
+            const tag = (CONFIG.ML_TAG || "").trim();
+            return /^\d+$/.test(tag) ? tag : "";
+        }
+
+        function mlNickname() {
+            const explicit = (CONFIG.ML_VITRINE || "").trim();
+            if (explicit) return explicit;
+
+            const tag = (CONFIG.ML_TAG || "").trim();
+            return /^\d+$/.test(tag) ? "" : tag;
+        }
+
+        function buildMl(url) {
+            const tag = mlToolCode();
+            if (!tag) {
+                throw new Error("ML_TAG precisa ser o código numérico do Portal de Afiliados (matt_tool).");
+            }
+
+            const clean = new URL(url.toString());
+            clean.hash = "";
+            clean.searchParams.set("matt_tool", tag);
+
+            const word = (CONFIG.ML_WORD || "").trim();
+            if (word) clean.searchParams.set("matt_word", word);
+
+            return clean.toString();
+        }
+
+        function buildMlVitrine() {
+            const nickname = mlNickname();
+            if (!nickname) throw new Error("Configure ML_VITRINE com o nome da sua vitrine.");
+            return `https://www.mercadolivre.com.br/social/${encodeURIComponent(nickname)}`;
+        }
+
+        function buildSearch(query) {
+            const term = encodeURIComponent(query.trim());
+
+            if (currentStore === "shopee") {
+                return `https://shopee.com.br/search?keyword=${term}`;
+            }
+
+            if (currentStore === "ml") {
+                const url = new URL(`https://lista.mercadolivre.com.br/${term}`);
+                const tag = mlToolCode();
+                if (tag) url.searchParams.set("matt_tool", tag);
+                return url.toString();
+            }
+
+            const url = new URL("https://www.amazon.com.br/s");
+            url.searchParams.set("k", query.trim());
+
+            const tag = (CONFIG.AMAZON_TAG || "").trim();
+            if (tag) url.searchParams.set("tag", tag);
+
+            return url.toString();
+        }
+
+        async function buildAffiliate(value) {
+            const url = normalizeUrl(value);
+
+            if (currentStore === "shopee") {
+                if (!hostMatches(url, ["shopee.com.br", "shope.ee", "shp.ee", "br.shp.ee"])) {
+                    throw new Error("O link precisa ser da Shopee.");
+                }
+                return await buildShopee(url);
+            }
+
+            if (currentStore === "ml") {
+                if (!hostMatches(url, ["mercadolivre.com.br", "mercadolivre.com"])) {
+                    throw new Error("O link precisa ser do Mercado Livre.");
+                }
+                return buildMl(url);
+            }
+
+            if (currentStore === "amazon") {
+                if (!hostMatches(url, ["amazon.com.br"])) {
+                    throw new Error("O link precisa ser da Amazon Brasil (amazon.com.br).");
+                }
+                return buildAmazon(url);
+            }
+
+            throw new Error("Loja não suportada.");
+        }
+
+        function showResult(link, title) {
+            resultTitle.textContent = title;
+            resultLink.value = link;
+            shareWa.href = `https://wa.me/?text=${encodeURIComponent(link)}`;
+            shareTg.href = `https://t.me/share/url?url=${encodeURIComponent(link)}`;
+            resultEl.classList.add("show");
+            resultEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function hideResult() {
+            resultEl.classList.remove("show");
+        }
+
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.classList.add("show");
+        }
+
+        function hideError() {
+            errorEl.textContent = "";
+            errorEl.classList.remove("show");
+        }
+
+        let toastTimer;
+
+        function showToast(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add("show");
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+        }
+
+        async function copyLink() {
+            const value = resultLink.value;
+            if (!value) return;
+
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(value);
+                } else {
+                    resultLink.focus();
+                    resultLink.select();
+                    document.execCommand("copy");
+                }
+                showToast("Link copiado!");
+            } catch {
+                showToast("Não foi possível copiar.");
+            }
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+            hideError();
+
+            const mode = getMode();
+            const value = input.value.trim();
+
+            if (mode.needsInput !== false && !value) {
+                showError(mode.kind === "search" ? "Digite um termo para pesquisar." : "Cole o link do produto.");
+                input.focus();
+                return;
+            }
+
+            submit.disabled = true;
+            submit.textContent = "Gerando...";
+
+            try {
+                if (mode.kind === "search") {
+                    const link = buildSearch(value);
+                    showResult(link, "Busca pronta");
+                    window.open(link, "_blank", "noopener,noreferrer");
+                } else if (mode.kind === "vitrine") {
+                    const link = buildMlVitrine();
+                    showResult(link, "Vitrine do Mercado Livre");
+                    window.open(link, "_blank", "noopener,noreferrer");
+                } else {
+                    const link = await buildAffiliate(value);
+                    showResult(link, "Link de afiliado gerado");
+                }
+            } catch (error) {
+                showError(error instanceof Error ? error.message : "Não foi possível gerar o link.");
+            } finally {
+                submit.disabled = false;
+                submit.textContent = mode.button;
+            }
+        }
+
+        storeTabs.forEach((tab) => {
+            tab.addEventListener("click", () => selectStore(tab.dataset.store));
+        });
+
+        form.addEventListener("submit", handleSubmit);
+        copyBtn.addEventListener("click", copyLink);
+        openBtn.addEventListener("click", () => {
+            if (resultLink.value) {
+                window.open(resultLink.value, "_blank", "noopener,noreferrer");
+            }
+        });
+
+        selectStore(currentStore);
+    </script>
+</body>
+</html>
