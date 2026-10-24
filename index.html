@@ -431,6 +431,150 @@
             transform: translate(-50%, 0);
         }
 
+        .offers {
+            margin-top: 22px;
+        }
+
+        .offers-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .offers-head h2 {
+            margin: 0;
+            font-size: 1.05rem;
+            letter-spacing: -0.02em;
+        }
+
+        .offers-head a {
+            color: var(--muted);
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .offers-head a:hover {
+            color: var(--text);
+        }
+
+        .offers-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .offer-card {
+            display: grid;
+            grid-template-columns: 96px minmax(0, 1fr);
+            gap: 12px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--panel);
+            color: var(--text);
+            text-decoration: none;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+
+        .offer-card:hover {
+            border-color: var(--brand);
+            transform: translateY(-1px);
+        }
+
+        .offer-thumb {
+            width: 96px;
+            height: 96px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: var(--panel-2);
+        }
+
+        .offer-thumb-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .offer-body {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .offer-meta {
+            color: var(--muted);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .offer-title {
+            display: -webkit-box;
+            overflow: hidden;
+            font-size: 0.86rem;
+            font-weight: 700;
+            line-height: 1.3;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .offer-price {
+            font-size: 0.94rem;
+            font-weight: 800;
+        }
+
+        .offer-price s {
+            margin-right: 6px;
+            color: var(--muted);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .offer-discount {
+            color: var(--ok);
+            font-size: 0.76rem;
+            font-weight: 800;
+        }
+
+        .offer-extra {
+            overflow: hidden;
+            color: var(--muted);
+            font-size: 0.72rem;
+            line-height: 1.25;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .offer-coupon {
+            font-size: 0.74rem;
+        }
+
+        .offer-coupon code {
+            padding: 2px 5px;
+            border-radius: 5px;
+            background: var(--panel-2);
+            color: var(--text);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .offers-empty {
+            margin: 0;
+            padding: 14px;
+            border: 1px dashed var(--line);
+            border-radius: 12px;
+            color: var(--muted);
+            font-size: 0.84rem;
+            text-align: center;
+        }
+
         @media (max-width: 420px) {
             body {
                 padding: 20px 12px;
@@ -484,6 +628,16 @@
                     <a class="btn-share btn-wa" id="share-wa" href="#" target="_blank" rel="noopener noreferrer">Compartilhe no WhatsApp</a>
                     <a class="btn-share btn-tg" id="share-tg" href="#" target="_blank" rel="noopener noreferrer">Compartilhe no Telegram</a>
                 </div>
+            </div>
+        </section>
+
+        <section class="offers" id="offers" aria-label="Últimas ofertas">
+            <div class="offers-head">
+                <h2>Últimas ofertas</h2>
+                <a href="https://t.me/promos_da_lala" target="_blank" rel="noopener noreferrer">Ver no Telegram ↗</a>
+            </div>
+            <div class="offers-grid" id="offers-grid">
+                <p class="offers-empty" id="offers-empty">Carregando ofertas...</p>
             </div>
         </section>
 
@@ -608,6 +762,8 @@
         const shareWa = document.getElementById("share-wa");
         const shareTg = document.getElementById("share-tg");
         const toastEl = document.getElementById("toast");
+        const offersGrid = document.getElementById("offers-grid");
+        const offersEmpty = document.getElementById("offers-empty");
 
         let currentStore = "shopee";
         let currentMode = "link";
@@ -884,6 +1040,139 @@
             toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
         }
 
+        function formatPrice(value) {
+            const numero = Number(value);
+            if (!Number.isFinite(numero) || numero <= 0) return "";
+            return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        }
+
+        function platformName(platform) {
+            const nomes = {
+                shopee: "Shopee",
+                mercadolivre: "Mercado Livre",
+                ml: "Mercado Livre",
+                amazon: "Amazon"
+            };
+            return nomes[platform] || "Oferta";
+        }
+
+        function placeholderThumb() {
+            const placeholder = document.createElement("div");
+            placeholder.className = "offer-thumb offer-thumb-placeholder";
+            placeholder.textContent = "🛍️";
+            return placeholder;
+        }
+
+        function renderOffer(offer) {
+            if (!offer || !offer.affiliate_url || !offer.title) return;
+
+            const card = document.createElement("a");
+            card.className = "offer-card";
+            card.href = offer.affiliate_url;
+            card.target = "_blank";
+            card.rel = "noopener noreferrer";
+            card.setAttribute("aria-label", `${offer.title} — ${platformName(offer.platform)}`);
+
+            if (offer.image_url) {
+                const img = document.createElement("img");
+                img.className = "offer-thumb";
+                img.src = offer.image_url;
+                img.alt = "";
+                img.loading = "lazy";
+                img.addEventListener("error", () => img.replaceWith(placeholderThumb()), { once: true });
+                card.appendChild(img);
+            } else {
+                card.appendChild(placeholderThumb());
+            }
+
+            const body = document.createElement("div");
+            body.className = "offer-body";
+
+            const meta = document.createElement("div");
+            meta.className = "offer-meta";
+            meta.textContent = offer.kind === "cupom"
+                ? `${platformName(offer.platform)} · Cupom`
+                : platformName(offer.platform);
+            body.appendChild(meta);
+
+            const title = document.createElement("div");
+            title.className = "offer-title";
+            title.textContent = offer.title;
+            body.appendChild(title);
+
+            const preco = Number(offer.price);
+            const precoOriginal = Number(offer.original_price);
+            if (Number.isFinite(preco) && preco > 0) {
+                const priceLine = document.createElement("div");
+                priceLine.className = "offer-price";
+
+                if (Number.isFinite(precoOriginal) && precoOriginal > preco) {
+                    const antigo = document.createElement("s");
+                    antigo.textContent = formatPrice(precoOriginal);
+                    priceLine.appendChild(antigo);
+                }
+
+                const atual = document.createElement("span");
+                atual.textContent = formatPrice(preco);
+                priceLine.appendChild(atual);
+
+                const desconto = Number(offer.discount);
+                if (Number.isFinite(desconto) && desconto > 0) {
+                    const selo = document.createElement("span");
+                    selo.className = "offer-discount";
+                    selo.textContent = ` -${Math.round(desconto)}%`;
+                    priceLine.appendChild(selo);
+                }
+
+                body.appendChild(priceLine);
+            }
+
+            if (offer.extra) {
+                const extra = document.createElement("div");
+                extra.className = "offer-extra";
+                extra.textContent = offer.extra;
+                body.appendChild(extra);
+            }
+
+            if (offer.coupon_code) {
+                const cupom = document.createElement("div");
+                cupom.className = "offer-coupon";
+                cupom.append("Cupom: ");
+                const codigo = document.createElement("code");
+                codigo.textContent = offer.coupon_code;
+                cupom.appendChild(codigo);
+                body.appendChild(cupom);
+            }
+
+            card.appendChild(body);
+            offersGrid.appendChild(card);
+        }
+
+        async function loadOffers() {
+            const base = (CONFIG.SUPABASE_URL || "").replace(/\/+$/, "");
+            if (!base || !offersGrid || !offersEmpty) {
+                if (offersEmpty) offersEmpty.textContent = "Ofertas indisponíveis no momento.";
+                return;
+            }
+
+            try {
+                const resposta = await fetch(`${base}/functions/v1/offers?limit=5`, { cache: "no-store" });
+                if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+
+                const ofertas = await resposta.json();
+                if (!Array.isArray(ofertas) || ofertas.length === 0) {
+                    offersEmpty.textContent = "Nenhuma oferta publicada ainda.";
+                    return;
+                }
+
+                offersGrid.innerHTML = "";
+                ofertas.forEach(renderOffer);
+            } catch (erro) {
+                console.error("Falha ao carregar ofertas:", erro);
+                offersEmpty.textContent = "Não foi possível carregar as ofertas agora.";
+            }
+        }
+
         async function copyLink() {
             const value = resultLink.value;
             if (!value) return;
@@ -952,6 +1241,7 @@
         });
 
         selectStore(currentStore);
+        loadOffers();
     </script>
 </body>
 </html>
