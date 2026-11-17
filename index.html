@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Gerador de links e busca de ofertas na Shopee, Mercado Livre e Amazon.">
+    <meta name="description" content="Gerador de links de afiliado e busca de ofertas na Shopee, Mercado Livre, Amazon e Magalu.">
     <meta name="theme-color" content="#0f1115">
     <meta property="og:title" content="Ofertas da Lala">
-    <meta property="og:description" content="Gere links e pesquise ofertas na Shopee, Mercado Livre e Amazon.">
+    <meta property="og:description" content="Gere links de afiliado e pesquise ofertas na Shopee, Mercado Livre, Amazon e Magalu.">
     <meta property="og:type" content="website">
     <title>Ofertas da Lala | Gerador de Links</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>">
@@ -84,7 +84,7 @@
 
         .store-tabs {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 7px;
             padding: 6px;
             margin-bottom: 14px;
@@ -584,6 +584,10 @@
                 padding: 16px;
             }
 
+            .store-tabs {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
             .store-tab {
                 font-size: 0.76rem;
             }
@@ -602,6 +606,7 @@
                 <button class="store-tab" type="button" data-store="shopee" aria-pressed="true">🛍️ Shopee</button>
                 <button class="store-tab" type="button" data-store="ml" aria-pressed="false">💛 Mercado Livre</button>
                 <button class="store-tab" type="button" data-store="amazon" aria-pressed="false">📦 Amazon</button>
+                <button class="store-tab" type="button" data-store="magalu" aria-pressed="false">🔵 Magalu</button>
             </div>
 
             <div class="modes" id="modes" role="group" aria-label="Modo de uso"></div>
@@ -740,6 +745,42 @@
                         placeholder: "O que você procura na Amazon?",
                         hint: "A busca abre no site da Amazon.",
                         kind: "search"
+                    }
+                ]
+            },
+            magalu: {
+                name: "Magalu",
+                brand: "#0086ff",
+                brand2: "#0066cc",
+                contrast: "#ffffff",
+                modes: [
+                    {
+                        id: "link",
+                        label: "🔗 Gerar link",
+                        icon: "📋",
+                        button: "Gerar link de afiliado",
+                        placeholder: "Cole o link do produto do Magalu...",
+                        hint: "Aceita links magazineluiza.com.br, magazinevoce.com.br e magazineluiza.onelink.me.",
+                        kind: "affiliate"
+                    },
+                    {
+                        id: "search",
+                        label: "🔍 Pesquisar",
+                        icon: "🔍",
+                        button: "Buscar no Magalu",
+                        placeholder: "O que você procura no Magalu?",
+                        hint: "A busca abre na sua vitrine.",
+                        kind: "search"
+                    },
+                    {
+                        id: "vitrine",
+                        label: "🛍️ Vitrine",
+                        icon: "🛍️",
+                        button: "Abrir vitrine",
+                        placeholder: "",
+                        hint: "Abre sua vitrine do Magalu.",
+                        kind: "vitrine",
+                        needsInput: false
                     }
                 ]
             }
@@ -923,6 +964,29 @@
             return clean.toString();
         }
 
+        async function buildMagalu(url) {
+            const base = (CONFIG.SUPABASE_URL || "").replace(/\/+$/, "");
+            if (!base) throw new Error("SUPABASE_URL não configurada no config.js.");
+
+            let response;
+            try {
+                response = await fetch(`${base}/functions/v1/magalu-link`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url: url.toString() })
+                });
+            } catch {
+                throw new Error("Falha de conexão com o Supabase. Verifique a URL e o CORS.");
+            }
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || typeof data.affiliateUrl !== "string") {
+                throw new Error(data.error || "Não foi possível gerar o link do Magalu.");
+            }
+
+            return data.affiliateUrl;
+        }
+
         function mlToolCode() {
             const tag = (CONFIG.ML_TAG || "").trim();
             return /^\d+$/.test(tag) ? tag : "";
@@ -958,6 +1022,12 @@
             return `https://www.mercadolivre.com.br/social/${encodeURIComponent(nickname)}`;
         }
 
+        function buildMagaluVitrine() {
+            const loja = (CONFIG.MAGALU_LOJA || "ofertalala").trim();
+            if (!loja) throw new Error("Configure MAGALU_LOJA com o nome da sua vitrine.");
+            return `https://www.magazinevoce.com.br/${encodeURIComponent(loja)}/`;
+        }
+
         function buildSearch(query) {
             const term = encodeURIComponent(query.trim());
 
@@ -970,6 +1040,11 @@
                 const tag = mlToolCode();
                 if (tag) url.searchParams.set("matt_tool", tag);
                 return url.toString();
+            }
+
+            if (currentStore === "magalu") {
+                const loja = (CONFIG.MAGALU_LOJA || "ofertalala").trim();
+                return `https://www.magazinevoce.com.br/${encodeURIComponent(loja)}/busca/${term}/`;
             }
 
             const url = new URL("https://www.amazon.com.br/s");
@@ -1003,6 +1078,13 @@
                     throw new Error("O link precisa ser da Amazon Brasil (amazon.com.br).");
                 }
                 return buildAmazon(url);
+            }
+
+            if (currentStore === "magalu") {
+                if (!hostMatches(url, ["magazineluiza.com.br", "magazinevoce.com.br", "magazineluiza.onelink.me"])) {
+                    throw new Error("O link precisa ser do Magalu.");
+                }
+                return await buildMagalu(url);
             }
 
             throw new Error("Loja não suportada.");
@@ -1051,7 +1133,8 @@
                 shopee: "Shopee",
                 mercadolivre: "Mercado Livre",
                 ml: "Mercado Livre",
-                amazon: "Amazon"
+                amazon: "Amazon",
+                magalu: "Magalu"
             };
             return nomes[platform] || "Oferta";
         }
@@ -1213,8 +1296,9 @@
                     showResult(link, "Busca pronta");
                     window.open(link, "_blank", "noopener,noreferrer");
                 } else if (mode.kind === "vitrine") {
-                    const link = buildMlVitrine();
-                    showResult(link, "Vitrine do Mercado Livre");
+                    const magalu = currentStore === "magalu";
+                    const link = magalu ? buildMagaluVitrine() : buildMlVitrine();
+                    showResult(link, magalu ? "Vitrine do Magalu" : "Vitrine do Mercado Livre");
                     window.open(link, "_blank", "noopener,noreferrer");
                 } else {
                     const link = await buildAffiliate(value);
