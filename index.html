@@ -683,6 +683,16 @@
                         placeholder: "O que você procura na Shopee?",
                         hint: "A busca abre no site da Shopee.",
                         kind: "search"
+                    },
+                    {
+                        id: "vitrine",
+                        label: "🛍️ Vitrine",
+                        icon: "🛍️",
+                        button: "Abrir vitrine",
+                        placeholder: "",
+                        hint: "Abre sua vitrine de afiliado da Shopee.",
+                        kind: "vitrine",
+                        needsInput: false
                     }
                 ]
             },
@@ -1028,6 +1038,15 @@
             return `https://www.magazinevoce.com.br/${encodeURIComponent(loja)}/`;
         }
 
+        function buildShopeeVitrine() {
+            const bruto = (CONFIG.SHOPEE_VITRINE || "").trim();
+            if (!bruto) {
+                throw new Error("Configure SHOPEE_VITRINE com o código da sua vitrine (collshp.com/...).");
+            }
+            if (/^https?:\/\//i.test(bruto)) return bruto;
+            return `https://collshp.com/${encodeURIComponent(bruto.replace(/^\/+/, ""))}`;
+        }
+
         function buildSearch(query) {
             const term = encodeURIComponent(query.trim());
 
@@ -1296,9 +1315,19 @@
                     showResult(link, "Busca pronta");
                     window.open(link, "_blank", "noopener,noreferrer");
                 } else if (mode.kind === "vitrine") {
-                    const magalu = currentStore === "magalu";
-                    const link = magalu ? buildMagaluVitrine() : buildMlVitrine();
-                    showResult(link, magalu ? "Vitrine do Magalu" : "Vitrine do Mercado Livre");
+                    let link;
+                    let titulo;
+                    if (currentStore === "magalu") {
+                        link = buildMagaluVitrine();
+                        titulo = "Vitrine do Magalu";
+                    } else if (currentStore === "shopee") {
+                        link = buildShopeeVitrine();
+                        titulo = "Vitrine da Shopee";
+                    } else {
+                        link = buildMlVitrine();
+                        titulo = "Vitrine do Mercado Livre";
+                    }
+                    showResult(link, titulo);
                     window.open(link, "_blank", "noopener,noreferrer");
                 } else {
                     const link = await buildAffiliate(value);
