@@ -29,6 +29,7 @@ jobs:
           ML_VITRINE: ${{ secrets.ML_VITRINE }}
           ML_WORD: ${{ secrets.ML_WORD }}
           SHOPEE_SUB_ID: ${{ secrets.SHOPEE_SUB_ID }}
+          SHOPEE_VITRINE: ${{ secrets.SHOPEE_VITRINE }}
           MAGALU_LOJA: ${{ secrets.MAGALU_LOJA }}
         run: |
           python3 - <<'PY'
@@ -42,6 +43,7 @@ jobs:
               "ML_VITRINE": os.environ.get("ML_VITRINE", ""),
               "ML_WORD": os.environ.get("ML_WORD", ""),
               "SHOPEE_SUB_ID": os.environ.get("SHOPEE_SUB_ID", "site"),
+              "SHOPEE_VITRINE": os.environ.get("SHOPEE_VITRINE") or "ofertasdalala26",
               "MAGALU_LOJA": os.environ.get("MAGALU_LOJA", "ofertalala"),
           }
 
